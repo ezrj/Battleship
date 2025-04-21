@@ -1,221 +1,291 @@
-# Directory Structure
-# 
-# ├── assets/
-# │   ├── water.png            # Placeholder: image for water cell
-# │   ├── ship_horizontal.png  # Placeholder: horizontal ship segment
-# │   ├── ship_vertical.png    # Placeholder: vertical ship segment
-# │   ├── hit.png              # Placeholder: image for hit marker
-# │   └── miss.png             # Placeholder: image for miss marker
-# └── battleship.py            # Main script
-
-"""
-battleship.py
-
-Usage:
-    python battleship.py server [port]
-    python battleship.py client <server_ip> [port]
-
-This script runs a networked Battleship game using pygame. One instance runs as the server,
-binds to a port and waits for a connection. The other runs as the client and connects to the server.
-Each side places ships randomly, then players take turns clicking the opponent's grid to fire.
-"""
-
-import sys
-import socket
-import pickle
-import random
 import pygame
+import socket
+import threading
+import pickle
+import sys
+import os
 
-# Grid and window settings
-CELL_SIZE = 40
+# Constants
 GRID_SIZE = 10
+CELL_SIZE = 40
 MARGIN = 20
-SCREEN_WIDTH = CELL_SIZE * GRID_SIZE * 2 + MARGIN * 3
-SCREEN_HEIGHT = CELL_SIZE * GRID_SIZE + MARGIN * 2
+INFO_PANEL_WIDTH = 200
+WINDOW_WIDTH = MARGIN * 3 + CELL_SIZE * GRID_SIZE * 2 + INFO_PANEL_WIDTH
+WINDOW_HEIGHT = MARGIN * 2 + CELL_SIZE * GRID_SIZE
 FPS = 30
 
-
+# Asset placeholders
 ASSETS_DIR = 'assets'
-WATER_IMG = f"{ASSETS_DIR}/water.png"
-SHIP_H_IMG = f"{ASSETS_DIR}/ship_horizontal.png"
-SHIP_V_IMG = f"{ASSETS_DIR}/ship_vertical.png"
-HIT_IMG = f"{ASSETS_DIR}/hit.png"
-MISS_IMG = f"{ASSETS_DIR}/miss.png"
+HIT_IMAGE = os.path.join(ASSETS_DIR, 'hit_x.png')       # red X for hits
+MISS_IMAGE = os.path.join(ASSETS_DIR, 'miss_x.png')     # black X for misses
+SEA_IMAGE = os.path.join(ASSETS_DIR, 'sea_tile.png')    # water background tile
 
-# Helper to load images with fallback to colored square
-def load_image(path, fallback_color):
-    try:
-        img = pygame.image.load(path)
-        return pygame.transform.scale(img, (CELL_SIZE, CELL_SIZE))
-    except Exception:
-        surface = pygame.Surface((CELL_SIZE, CELL_SIZE))
-        surface.fill(fallback_color)
-        return surface
+# Ship rendering color (simple grey square per cell)
+SHIP_TILE_COLOR = (150, 150, 150)
+
+# Network message types
+MSG_SHOT = 'shot'
+MSG_RESULT = 'result'
+MSG_READY = 'ready'
+MSG_GAME_OVER = 'game_over'
+
+class Ship:
+    def __init__(self, length):
+        self.length = length
+        self.orientation = 'H'  # 'H' or 'V'
+        self.positions = []
+        self.hits = set()
+
+    def place(self, x, y, orientation):
+        self.orientation = orientation
+        self.positions = []
+        for i in range(self.length):
+            dx, dy = (i, 0) if orientation == 'H' else (0, i)
+            self.positions.append((x + dx, y + dy))
+
+    def is_sunk(self):
+        return set(self.positions) == self.hits
+
+    def register_hit(self, pos):
+        if pos in self.positions:
+            self.hits.add(pos)
+            return True
+        return False
 
 class Board:
     def __init__(self):
-        # 0 = empty, 1 = ship
-        self.grid = [[0] * GRID_SIZE for _ in range(GRID_SIZE)]
+        self.grid = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
         self.ships = []
         self.hits = set()
         self.misses = set()
-        self.place_ships_randomly()
 
-    def place_ships_randomly(self):
-        # Standard battleship lengths
-        lengths = [5, 4, 3, 3, 2]
-        for length in lengths:
-            placed = False
-            while not placed:
-                orient = random.choice(['H', 'V'])
-                if orient == 'H':
-                    x = random.randint(0, GRID_SIZE - length)
-                    y = random.randint(0, GRID_SIZE - 1)
-                    coords = [(x + i, y) for i in range(length)]
-                else:
-                    x = random.randint(0, GRID_SIZE - 1)
-                    y = random.randint(0, GRID_SIZE - length)
-                    coords = [(x, y + i) for i in range(length)]
-                # Check overlap
-                if all(self.grid[cy][cx] == 0 for cx, cy in coords):
-                    for cx, cy in coords:
-                        self.grid[cy][cx] = 1
-                    self.ships.append(coords)
-                    placed = True
+    def add_ship(self, ship):
+        for x, y in ship.positions:
+            self.grid[y][x] = ship
+        self.ships.append(ship)
 
-    def receive_attack(self, x, y):
+    def receive_shot(self, x, y):
         if (x, y) in self.hits or (x, y) in self.misses:
-            return 'already'
-        if self.grid[y][x] == 1:
+            return False, False
+        target = self.grid[y][x]
+        if target:
+            hit = target.register_hit((x, y))
             self.hits.add((x, y))
-            return 'hit'
+            sunk = target.is_sunk()
+            return True, sunk
         else:
             self.misses.add((x, y))
-            return 'miss'
+            return False, False
 
     def all_sunk(self):
-        # Check if every ship's cells are in hits
-        return all(all((cx, cy) in self.hits for cx, cy in ship) for ship in self.ships)
+        return all(ship.is_sunk() for ship in self.ships)
 
-# Draw a board at horizontal offset offset_x
-def draw_board(screen, board, offset_x, show_ships):
-    for row in range(GRID_SIZE):
-        for col in range(GRID_SIZE):
-            x = offset_x + col * CELL_SIZE
-            y = MARGIN + row * CELL_SIZE
-            # Draw water background
-            screen.blit(water_img, (x, y))
-            # Optionally draw ships
-            if show_ships and board.grid[row][col] == 1:
-                screen.blit(ship_h_img, (x, y))  # Using horizontal image for all segments
-            # Draw misses
-            if (col, row) in board.misses:
-                screen.blit(miss_img, (x, y))
-            # Draw hits
-            if (col, row) in board.hits:
-                screen.blit(hit_img, (x, y))
+class Network:
+    def __init__(self, role, host, port):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if role == 'server':
+            self.sock.bind((host, port))
+            self.sock.listen(1)
+            print('Waiting for connection...')
+            self.conn, _ = self.sock.accept()
+            print('Client connected.')
+        else:
+            self.sock.connect((host, port))
+            self.conn = self.sock
+            print('Connected to server.')
+        self.inbox = []
+        self.recv_thread = threading.Thread(target=self._receive_loop, daemon=True)
+        self.recv_thread.start()
 
+    def send(self, msg):
+        data = pickle.dumps(msg)
+        self.conn.sendall(data)
 
-def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ('server', 'client'):
-        print(__doc__)
-        sys.exit(1)
-    role = sys.argv[1]
-    # Default port
-    port = int(sys.argv[2]) if len(sys.argv) >= 3 and role == 'server' else 50007
-    if role == 'server':
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('', port))
-        sock.listen(1)
-        print(f"Waiting for connection on port {port}...")
-        conn, addr = sock.accept()
-        print(f"Connected by {addr}")
-    else:
-        if len(sys.argv) < 3:
-            print("Usage: python battleship.py client <server_ip> [port]")
-            sys.exit(1)
-        host = sys.argv[2]
-        port = int(sys.argv[3]) if len(sys.argv) >= 4 else 50007
-        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print(f"Connecting to {host}:{port}...")
-        conn.connect((host, port))
-        print("Connected to server")
-
-    # Initialize pygame
-    pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Battleship")
-    clock = pygame.time.Clock()
-
-    # Load images
-    global water_img, ship_h_img, ship_v_img, hit_img, miss_img
-    water_img = load_image(WATER_IMG, (0, 0, 128))
-    ship_h_img = load_image(SHIP_H_IMG, (192, 192, 192))
-    ship_v_img = load_image(SHIP_V_IMG, (192, 192, 192))
-    hit_img = load_image(HIT_IMG, (255, 0, 0))
-    miss_img = load_image(MISS_IMG, (255, 255, 255))
-
-    # Create boards
-    my_board = Board()
-    opp_board = Board()
-    my_turn = (role == 'server')
-    running = True
-
-    while running:
-        # Handle events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+    def _receive_loop(self):
+        while True:
+            try:
+                data = self.conn.recv(4096)
+                if not data:
+                    break
+                msg = pickle.loads(data)
+                self.inbox.append(msg)
+            except Exception:
                 break
-            # Handle click on opponent's grid when it's our turn
-            if event.type == pygame.MOUSEBUTTONDOWN and my_turn:
-                mx, my = pygame.mouse.get_pos()
-                opp_offset = MARGIN * 2 + GRID_SIZE * CELL_SIZE
-                if opp_offset <= mx < opp_offset + GRID_SIZE * CELL_SIZE and MARGIN <= my < MARGIN + GRID_SIZE * CELL_SIZE:
-                    col = (mx - opp_offset) // CELL_SIZE
-                    row = (my - MARGIN) // CELL_SIZE
-                    # Send attack
-                    conn.sendall(pickle.dumps({'type': 'attack', 'x': col, 'y': row}))
-                    # Receive result
-                    data = conn.recv(4096)
-                    msg = pickle.loads(data)
-                    if msg['type'] == 'result':
-                        if msg['result'] == 'hit':
-                            opp_board.hits.add((col, row))
-                        elif msg['result'] == 'miss':
-                            opp_board.misses.add((col, row))
-                    elif msg['type'] == 'game_over':
-                        print("You win!")
-                        running = False
-                    my_turn = False
 
-        # If it's opponent's turn, wait for their attack
-        if not my_turn and running:
-            data = conn.recv(4096)
-            msg = pickle.loads(data)
-            if msg['type'] == 'attack':
-                x, y = msg['x'], msg['y']
-                result = my_board.receive_attack(x, y)
-                conn.sendall(pickle.dumps({'type': 'result', 'result': result}))
-                if my_board.all_sunk():
-                    conn.sendall(pickle.dumps({'type': 'game_over'}))
-                    print("You lose!")
-                    running = False
-                my_turn = True
+    def get_message(self):
+        return self.inbox.pop(0) if self.inbox else None
 
-        # Draw boards
-        screen.fill((0, 0, 0))
-        # Draw our board on the left (show ships)
-        draw_board(screen, my_board, MARGIN, show_ships=True)
-        # Draw opponent board on the right (hide ships)
-        draw_board(screen, opp_board, MARGIN * 2 + GRID_SIZE * CELL_SIZE, show_ships=False)
+class Game:
+    def __init__(self, role, host, port):
+        pygame.init()
+        self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        pygame.display.set_caption('Networked Battleship')
+        self.clock = pygame.time.Clock()
+        self.network = Network(role, host, port)
+
+        # Boards and ships
+        self.own_board = Board()
+        self.enemy_board = Board()
+        self.ships_to_place = [Ship(l) for l in [5,4,3,2,1]]
+        self.selected_ship = None
+        self.preview_orientation = 'H'
+        self.mouse_grid = (0, 0)
+
+        # State flags
+        self.placing = True  # still positioning ships
+        self.ready = False   # placement done
+        self.opponent_ready = False
+        self.turn = (role == 'server')
+        self.running = True
+
+        # Load graphics
+        self.hit_img = pygame.transform.scale(pygame.image.load(HIT_IMAGE), (CELL_SIZE, CELL_SIZE))
+        self.miss_img = pygame.transform.scale(pygame.image.load(MISS_IMAGE), (CELL_SIZE, CELL_SIZE))
+        self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE),  (CELL_SIZE, CELL_SIZE))
+
+    def run(self):
+        while self.running:
+            self.clock.tick(FPS)
+            self.handle_network()
+            self.handle_events()
+
+            # Start game when both players ready
+            if self.placing and self.ready and self.opponent_ready:
+                self.placing = False
+                print('Both ready—game starting!')
+
+            self.draw()
+        pygame.quit()
+
+    def handle_network(self):
+        msg = self.network.get_message()
+        if not msg: return
+        t = msg['type']
+        if t == MSG_READY:
+            self.opponent_ready = True
+
+        elif t == MSG_SHOT:
+            x, y = msg['pos']
+            hit, sunk = self.own_board.receive_shot(x, y)
+            # Only give defender the turn on a miss
+            if not hit:
+                self.turn = True
+            self.network.send({'type': MSG_RESULT, 'hit': hit, 'pos': (x, y), 'sunk': sunk})
+            if self.own_board.all_sunk():
+                self.network.send({'type': MSG_GAME_OVER})
+                self.game_over(False)
+
+        elif t == MSG_RESULT:
+            hit = msg['hit']
+            x, y = msg['pos']
+            if hit:
+                self.enemy_board.hits.add((x, y))
+                # attacker keeps turn on hit
+                self.turn = True
+            else:
+                self.enemy_board.misses.add((x, y))
+                # attacker loses turn on miss
+                self.turn = False
+
+        elif t == MSG_GAME_OVER:
+            self.game_over(True)
+
+    def handle_events(self):
+        for ev in pygame.event.get():
+            if ev.type == pygame.QUIT:
+                self.running = False
+            elif ev.type == pygame.KEYDOWN and ev.key == pygame.K_r and self.placing and self.selected_ship:
+                self.preview_orientation = 'V' if self.preview_orientation == 'H' else 'H'
+            elif self.placing:
+                self.handle_placement(ev)
+            elif self.turn and ev.type == pygame.MOUSEBUTTONDOWN:
+                self.fire(ev)
+
+        if self.placing:
+            mx, my = pygame.mouse.get_pos()
+            self.mouse_grid = ((mx - MARGIN) // CELL_SIZE, (my - MARGIN) // CELL_SIZE)
+
+    def handle_placement(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            gx, gy = self.mouse_grid
+            if not self.selected_ship and self.ships_to_place:
+                self.selected_ship = self.ships_to_place.pop(0)
+                self.preview_orientation = 'H'
+            elif self.selected_ship:
+                coords = [
+                    (gx + (i if self.preview_orientation == 'H' else 0),
+                     gy + (i if self.preview_orientation == 'V' else 0))
+                    for i in range(self.selected_ship.length)
+                ]
+                if all(0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE and not self.own_board.grid[y][x] for x, y in coords):
+                    self.selected_ship.place(gx, gy, self.preview_orientation)
+                    self.own_board.add_ship(self.selected_ship)
+                    self.selected_ship = None
+                    if not self.ships_to_place:
+                        self.ready = True
+                        self.network.send({'type': MSG_READY})
+
+    def fire(self, event):
+        mx, my = event.pos
+        off = MARGIN * 2 + CELL_SIZE * GRID_SIZE
+        if mx > off:
+            gx, gy = (mx - off) // CELL_SIZE, (my - MARGIN) // CELL_SIZE
+            if 0 <= gx < GRID_SIZE and 0 <= gy < GRID_SIZE:
+                # attacker relinquishes turn until result
+                self.turn = False
+                self.network.send({'type': MSG_SHOT, 'pos': (gx, gy)})
+
+    def draw(self):
+        self.screen.fill((50, 150, 200))
+        # Draw own board
+        for y in range(GRID_SIZE):
+            for x in range(GRID_SIZE):
+                rect = pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                self.screen.blit(self.sea_img, rect.topleft)
+                if self.own_board.grid[y][x]:
+                    pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
+                if (x, y) in self.own_board.hits:
+                    self.screen.blit(self.hit_img, rect.topleft)
+                elif (x, y) in self.own_board.misses:
+                    self.screen.blit(self.miss_img, rect.topleft)
+
+        # Draw enemy board
+        offx = MARGIN * 2 + CELL_SIZE * GRID_SIZE
+        for y in range(GRID_SIZE):
+            for x in range(GRID_SIZE):
+                rect = pygame.Rect(offx + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                self.screen.blit(self.sea_img, rect.topleft)
+                if (x, y) in self.enemy_board.hits:
+                    self.screen.blit(self.hit_img, rect.topleft)
+                elif (x, y) in self.enemy_board.misses:
+                    self.screen.blit(self.miss_img, rect.topleft)
+
+        # Placement preview
+        if self.placing and self.selected_ship:
+            gx, gy = self.mouse_grid
+            for i in range(self.selected_ship.length):
+                dx, dy = (i, 0) if self.preview_orientation == 'H' else (0, i)
+                px, py = gx + dx, gy + dy
+                if 0 <= px < GRID_SIZE and 0 <= py < GRID_SIZE:
+                    rect = pygame.Rect(MARGIN + px * CELL_SIZE, MARGIN + py * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    pygame.draw.rect(self.screen, (255, 255, 255), rect, 2)
 
         pygame.display.flip()
-        clock.tick(FPS)
 
-    conn.close()
-    pygame.quit()
+    def game_over(self, won):
+        font = pygame.font.SysFont(None, 48)
+        text = 'You won!' if won else 'You lost!'
+        img = font.render(text, True, (255, 255, 255))
+        self.screen.blit(img, (WINDOW_WIDTH // 2 - img.get_width() // 2, WINDOW_HEIGHT // 2 - img.get_height() // 2))
+        pygame.display.flip()
+        pygame.time.wait(10000)
+        self.running = False
 
-if __name__ == "__main__":
-    main()
-
+if __name__ == '__main__':
+    if len(sys.argv) < 2:
+        print('Usage: python battleship.py server|client host [port]')
+        sys.exit(1)
+    role = sys.argv[1]
+    host = sys.argv[2] if len(sys.argv) > 2 else 'localhost'
+    port = int(sys.argv[3]) if len(sys.argv) > 3 else 5000
+    Game(role, host, port).run()
