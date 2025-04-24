@@ -18,7 +18,16 @@ FPS = 30
 ASSETS_DIR = 'assets'
 HIT_IMAGE = os.path.join(ASSETS_DIR, 'hit_x.png')       # red X for hits
 MISS_IMAGE = os.path.join(ASSETS_DIR, 'miss_x.png')     # black X for misses
-SEA_IMAGE = os.path.join(ASSETS_DIR, 'sea_tile.png')    # water background tile
+SEA_IMAGE = [os.path.join(ASSETS_DIR, 'animTest', '0.png'), os.path.join(ASSETS_DIR, 'animTest', '1.png'), os.path.join(ASSETS_DIR, 'animTest', '2.png'),
+os.path.join(ASSETS_DIR, 'animTest', '3.png'), os.path.join(ASSETS_DIR, 'animTest', '4.png'), os.path.join(ASSETS_DIR, 'animTest', '5.png'),
+os.path.join(ASSETS_DIR, 'animTest', '6.png'), os.path.join(ASSETS_DIR, 'animTest', '7.png'), os.path.join(ASSETS_DIR, 'animTest', '8.png'),
+os.path.join(ASSETS_DIR, 'animTest', '9.png'), os.path.join(ASSETS_DIR, 'animTest', '10.png'), os.path.join(ASSETS_DIR, 'animTest', '11.png'),
+os.path.join(ASSETS_DIR, 'animTest', '12.png'), os.path.join(ASSETS_DIR, 'animTest', '13.png'), os.path.join(ASSETS_DIR, 'animTest', '14.png'),
+os.path.join(ASSETS_DIR, 'animTest', '15.png'), os.path.join(ASSETS_DIR, 'animTest', '16.png'), os.path.join(ASSETS_DIR, 'animTest', '17.png'),
+os.path.join(ASSETS_DIR, 'animTest', '18.png'), os.path.join(ASSETS_DIR, 'animTest', '19.png'), os.path.join(ASSETS_DIR, 'animTest', '20.png'),
+os.path.join(ASSETS_DIR, 'animTest', '21.png'), os.path.join(ASSETS_DIR, 'animTest', '22.png'), os.path.join(ASSETS_DIR, 'animTest', '23.png'),
+os.path.join(ASSETS_DIR, 'animTest', '24.png'), os.path.join(ASSETS_DIR, 'animTest', '25.png'), os.path.join(ASSETS_DIR, 'animTest', '26.png'),
+os.path.join(ASSETS_DIR, 'animTest', '27.png'), os.path.join(ASSETS_DIR, 'animTest', '27.png')]    # water background tile
 
 # Ship rendering color (simple grey square per cell)
 SHIP_TILE_COLOR = (150, 150, 150)
@@ -116,6 +125,7 @@ class Network:
         return self.inbox.pop(0) if self.inbox else None
 
 class Game:
+    
     def __init__(self, role, host, port):
         pygame.init()
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -139,9 +149,11 @@ class Game:
         self.running = True
 
         # Load graphics
+        self.SEA_FRAME = 0 # water background tile current frame
         self.hit_img = pygame.transform.scale(pygame.image.load(HIT_IMAGE), (CELL_SIZE, CELL_SIZE))
         self.miss_img = pygame.transform.scale(pygame.image.load(MISS_IMAGE), (CELL_SIZE, CELL_SIZE))
-        self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE),  (CELL_SIZE, CELL_SIZE))
+        self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
+
 
     def run(self):
         while self.running:
@@ -153,6 +165,12 @@ class Game:
             if self.placing and self.ready and self.opponent_ready:
                 self.placing = False
                 print('Both ready—game starting!')
+
+            if self.SEA_FRAME >= len(SEA_IMAGE) - 1:
+                self.SEA_FRAME = 0
+            else:
+                self.SEA_FRAME += 1
+            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
 
             self.draw()
         pygame.quit()
