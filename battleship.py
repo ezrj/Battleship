@@ -6,7 +6,7 @@ import sys
 import os
 
 # Constants
-WAVE_STYLE = 1     #Choose Between 1 or 2 for comparison
+WAVE_STYLE = 2     #Choose Between 1 or 2 for comparison
 GRID_SIZE = 10
 CELL_SIZE = 40
 MARGIN = 20
@@ -17,8 +17,8 @@ FPS = 30
 
 # Asset placeholders
 ASSETS_DIR = 'assets'
-HIT_IMAGE = os.path.join(ASSETS_DIR, 'hit_x.png')       # red X for hits
-MISS_IMAGE = os.path.join(ASSETS_DIR, 'miss_x.png')     # black X for misses
+HIT_IMAGE = os.path.join(ASSETS_DIR, 'Hit.png')       # red X for hits
+MISS_IMAGE = os.path.join(ASSETS_DIR, 'Miss.png')     # black X for misses
 SEA_IMAGE = [os.path.join(ASSETS_DIR, 'Waves1', '0001.png'), os.path.join(ASSETS_DIR, 'Waves1', '0002.png'),
 os.path.join(ASSETS_DIR, 'Waves1', '0003.png'), os.path.join(ASSETS_DIR, 'Waves1', '0004.png'), os.path.join(ASSETS_DIR, 'Waves1', '0005.png'),
 os.path.join(ASSETS_DIR, 'Waves1', '0006.png'), os.path.join(ASSETS_DIR, 'Waves1', '0007.png'), os.path.join(ASSETS_DIR, 'Waves1', '0008.png'),
