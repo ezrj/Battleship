@@ -295,7 +295,7 @@ class Game:
 
         # Draw own board
         own_border_rect = pygame.Rect(MARGIN - 3, MARGIN - 3, (CELL_SIZE * 10 + 6), (CELL_SIZE * 10 + 6))
-        if(self.placing):
+        if(self.placing and not self.ready):
             pygame.draw.rect(self.screen, FLASH_COLOR[self.flash_frame], own_border_rect)
             if(self.flash_frame >= len(FLASH_COLOR) - 1):
                 self.flash_frame = 0
