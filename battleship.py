@@ -6,6 +6,7 @@ import sys
 import os
 
 # Constants
+WAVE_STYLE = 2     #Choose Between 1 or 2 for comparison
 GRID_SIZE = 10
 CELL_SIZE = 40
 MARGIN = 20
@@ -18,16 +19,40 @@ FPS = 30
 ASSETS_DIR = 'assets'
 HIT_IMAGE = os.path.join(ASSETS_DIR, 'hit_x.png')       # red X for hits
 MISS_IMAGE = os.path.join(ASSETS_DIR, 'miss_x.png')     # black X for misses
-SEA_IMAGE = [os.path.join(ASSETS_DIR, 'animTest', '0.png'), os.path.join(ASSETS_DIR, 'animTest', '1.png'), os.path.join(ASSETS_DIR, 'animTest', '2.png'),
-os.path.join(ASSETS_DIR, 'animTest', '3.png'), os.path.join(ASSETS_DIR, 'animTest', '4.png'), os.path.join(ASSETS_DIR, 'animTest', '5.png'),
-os.path.join(ASSETS_DIR, 'animTest', '6.png'), os.path.join(ASSETS_DIR, 'animTest', '7.png'), os.path.join(ASSETS_DIR, 'animTest', '8.png'),
-os.path.join(ASSETS_DIR, 'animTest', '9.png'), os.path.join(ASSETS_DIR, 'animTest', '10.png'), os.path.join(ASSETS_DIR, 'animTest', '11.png'),
-os.path.join(ASSETS_DIR, 'animTest', '12.png'), os.path.join(ASSETS_DIR, 'animTest', '13.png'), os.path.join(ASSETS_DIR, 'animTest', '14.png'),
-os.path.join(ASSETS_DIR, 'animTest', '15.png'), os.path.join(ASSETS_DIR, 'animTest', '16.png'), os.path.join(ASSETS_DIR, 'animTest', '17.png'),
-os.path.join(ASSETS_DIR, 'animTest', '18.png'), os.path.join(ASSETS_DIR, 'animTest', '19.png'), os.path.join(ASSETS_DIR, 'animTest', '20.png'),
-os.path.join(ASSETS_DIR, 'animTest', '21.png'), os.path.join(ASSETS_DIR, 'animTest', '22.png'), os.path.join(ASSETS_DIR, 'animTest', '23.png'),
-os.path.join(ASSETS_DIR, 'animTest', '24.png'), os.path.join(ASSETS_DIR, 'animTest', '25.png'), os.path.join(ASSETS_DIR, 'animTest', '26.png'),
-os.path.join(ASSETS_DIR, 'animTest', '27.png'), os.path.join(ASSETS_DIR, 'animTest', '27.png')]    # water background tile
+SEA_IMAGE = [os.path.join(ASSETS_DIR, 'Waves1', '0001.png'), os.path.join(ASSETS_DIR, 'Waves1', '0002.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0003.png'), os.path.join(ASSETS_DIR, 'Waves1', '0004.png'), os.path.join(ASSETS_DIR, 'Waves1', '0005.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0006.png'), os.path.join(ASSETS_DIR, 'Waves1', '0007.png'), os.path.join(ASSETS_DIR, 'Waves1', '0008.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0009.png'), os.path.join(ASSETS_DIR, 'Waves1', '0010.png'), os.path.join(ASSETS_DIR, 'Waves1', '0011.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0012.png'), os.path.join(ASSETS_DIR, 'Waves1', '0013.png'), os.path.join(ASSETS_DIR, 'Waves1', '0014.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0015.png'), os.path.join(ASSETS_DIR, 'Waves1', '0016.png'), os.path.join(ASSETS_DIR, 'Waves1', '0017.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0018.png'), os.path.join(ASSETS_DIR, 'Waves1', '0019.png'), os.path.join(ASSETS_DIR, 'Waves1', '0020.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0021.png'), os.path.join(ASSETS_DIR, 'Waves1', '0022.png'), os.path.join(ASSETS_DIR, 'Waves1', '0023.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0024.png'), os.path.join(ASSETS_DIR, 'Waves1', '0025.png'), os.path.join(ASSETS_DIR, 'Waves1', '0026.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0027.png'), os.path.join(ASSETS_DIR, 'Waves1', '0028.png'), os.path.join(ASSETS_DIR, 'Waves1', '0029.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0030.png'), os.path.join(ASSETS_DIR, 'Waves1', '0031.png'), os.path.join(ASSETS_DIR, 'Waves1', '0032.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0033.png'), os.path.join(ASSETS_DIR, 'Waves1', '0034.png'), os.path.join(ASSETS_DIR, 'Waves1', '0035.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0036.png'), os.path.join(ASSETS_DIR, 'Waves1', '0037.png'), os.path.join(ASSETS_DIR, 'Waves1', '0038.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0039.png'), os.path.join(ASSETS_DIR, 'Waves1', '0040.png'), os.path.join(ASSETS_DIR, 'Waves1', '0041.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0042.png'), os.path.join(ASSETS_DIR, 'Waves1', '0043.png'), os.path.join(ASSETS_DIR, 'Waves1', '0044.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0045.png'), os.path.join(ASSETS_DIR, 'Waves1', '0046.png'), os.path.join(ASSETS_DIR, 'Waves1', '0047.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0048.png'), os.path.join(ASSETS_DIR, 'Waves1', '0049.png'), os.path.join(ASSETS_DIR, 'Waves1', '0050.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0051.png'), os.path.join(ASSETS_DIR, 'Waves1', '0052.png'), os.path.join(ASSETS_DIR, 'Waves1', '0053.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0054.png'), os.path.join(ASSETS_DIR, 'Waves1', '0055.png'), os.path.join(ASSETS_DIR, 'Waves1', '0056.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0057.png'), os.path.join(ASSETS_DIR, 'Waves1', '0058.png'), os.path.join(ASSETS_DIR, 'Waves1', '0059.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0060.png'), os.path.join(ASSETS_DIR, 'Waves1', '0061.png'), os.path.join(ASSETS_DIR, 'Waves1', '0062.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0063.png'), os.path.join(ASSETS_DIR, 'Waves1', '0064.png'), os.path.join(ASSETS_DIR, 'Waves1', '0065.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0066.png'), os.path.join(ASSETS_DIR, 'Waves1', '0067.png'), os.path.join(ASSETS_DIR, 'Waves1', '0068.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0069.png'), os.path.join(ASSETS_DIR, 'Waves1', '0070.png'), os.path.join(ASSETS_DIR, 'Waves1', '0071.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0072.png'), os.path.join(ASSETS_DIR, 'Waves1', '0073.png'), os.path.join(ASSETS_DIR, 'Waves1', '0074.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0075.png'), os.path.join(ASSETS_DIR, 'Waves1', '0076.png'), os.path.join(ASSETS_DIR, 'Waves1', '0077.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0078.png'), os.path.join(ASSETS_DIR, 'Waves1', '0079.png'), os.path.join(ASSETS_DIR, 'Waves1', '0080.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0081.png'), os.path.join(ASSETS_DIR, 'Waves1', '0082.png'), os.path.join(ASSETS_DIR, 'Waves1', '0083.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0084.png'), os.path.join(ASSETS_DIR, 'Waves1', '0085.png'), os.path.join(ASSETS_DIR, 'Waves1', '0086.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0087.png'), os.path.join(ASSETS_DIR, 'Waves1', '0088.png'), os.path.join(ASSETS_DIR, 'Waves1', '0089.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0090.png'), os.path.join(ASSETS_DIR, 'Waves1', '0091.png'), os.path.join(ASSETS_DIR, 'Waves1', '0092.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0093.png'), os.path.join(ASSETS_DIR, 'Waves1', '0094.png'), os.path.join(ASSETS_DIR, 'Waves1', '0095.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0096.png'), os.path.join(ASSETS_DIR, 'Waves1', '0097.png'), os.path.join(ASSETS_DIR, 'Waves1', '0098.png'),
+os.path.join(ASSETS_DIR, 'Waves1', '0099.png'), os.path.join(ASSETS_DIR, 'Waves1', '0100.png')]    # water background tile
 
 # Ship rendering color (simple grey square per cell)
 SHIP_TILE_COLOR = (150, 150, 150)
@@ -152,7 +177,11 @@ class Game:
         self.SEA_FRAME = 0 # water background tile current frame
         self.hit_img = pygame.transform.scale(pygame.image.load(HIT_IMAGE), (CELL_SIZE, CELL_SIZE))
         self.miss_img = pygame.transform.scale(pygame.image.load(MISS_IMAGE), (CELL_SIZE, CELL_SIZE))
-        self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
+
+        if(WAVE_STYLE == 1):
+            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
+        elif(WAVE_STYLE == 2):
+            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE*2, CELL_SIZE*2))
 
 
     def run(self):
@@ -166,11 +195,15 @@ class Game:
                 self.placing = False
                 print('Both ready—game starting!')
 
-            if self.SEA_FRAME >= len(SEA_IMAGE) - 1:
+            if self.SEA_FRAME >= (len(SEA_IMAGE) - 1):
                 self.SEA_FRAME = 0
             else:
                 self.SEA_FRAME += 1
-            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
+            
+            if(WAVE_STYLE == 1):
+                self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
+            elif(WAVE_STYLE == 2):
+                self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE*2, CELL_SIZE*2))
 
             self.draw()
         pygame.quit()
@@ -259,7 +292,13 @@ class Game:
         for y in range(GRID_SIZE):
             for x in range(GRID_SIZE):
                 rect = pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                self.screen.blit(self.sea_img, rect.topleft)
+
+                if(WAVE_STYLE == 1):
+                    self.screen.blit(self.sea_img, rect.topleft)
+                elif(WAVE_STYLE == 2):
+                    if(y % 2 == 0 and x % 2 == 0):
+                        self.screen.blit(self.sea_img, rect.topleft)
+
                 if self.own_board.grid[y][x]:
                     pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
                 if (x, y) in self.own_board.hits:
@@ -272,7 +311,13 @@ class Game:
         for y in range(GRID_SIZE):
             for x in range(GRID_SIZE):
                 rect = pygame.Rect(offx + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                self.screen.blit(self.sea_img, rect.topleft)
+
+                if(WAVE_STYLE == 1):
+                    self.screen.blit(self.sea_img, rect.topleft)
+                elif(WAVE_STYLE == 2):
+                    if(y % 2 == 0 and x % 2 == 0):
+                        self.screen.blit(self.sea_img, rect.topleft)
+                
                 if (x, y) in self.enemy_board.hits:
                     self.screen.blit(self.hit_img, rect.topleft)
                 elif (x, y) in self.enemy_board.misses:
