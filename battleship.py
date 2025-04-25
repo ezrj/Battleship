@@ -56,7 +56,9 @@ os.path.join(ASSETS_DIR, 'Waves1', '0099.png'), os.path.join(ASSETS_DIR, 'Waves1
 
 # Ship rendering color (simple grey square per cell)
 SHIP_TILE_COLOR = (150, 150, 150)
+
 GRID_COLOR = (0, 0, 0)
+FLASH_COLOR = [(255, 0, 255), (255, 0, 255), (255, 255, 0), (255, 255, 0), (255, 0, 255)]
 
 # Network message types
 MSG_SHOT = 'shot'
@@ -175,14 +177,15 @@ class Game:
         self.running = True
 
         # Load graphics
-        self.SEA_FRAME = 0 # water background tile current frame
+        self.sea_frame = 0 # water background tile current frame
+        self.flash_frame = 0 # variable for alternating colors for border flashes
         self.hit_img = pygame.transform.scale(pygame.image.load(HIT_IMAGE), (CELL_SIZE, CELL_SIZE))
         self.miss_img = pygame.transform.scale(pygame.image.load(MISS_IMAGE), (CELL_SIZE, CELL_SIZE))
 
         if(WAVE_STYLE == 1):
-            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
+            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.sea_frame]),  (CELL_SIZE, CELL_SIZE))
         elif(WAVE_STYLE == 2):
-            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE*2, CELL_SIZE*2))
+            self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.sea_frame]),  (CELL_SIZE*2, CELL_SIZE*2))
 
 
     def run(self):
@@ -196,15 +199,15 @@ class Game:
                 self.placing = False
                 print('Both ready—game starting!')
 
-            if self.SEA_FRAME >= (len(SEA_IMAGE) - 1):
-                self.SEA_FRAME = 0
+            if self.sea_frame >= (len(SEA_IMAGE) - 1):
+                self.sea_frame = 0
             else:
-                self.SEA_FRAME += 1
+                self.sea_frame += 1
             
             if(WAVE_STYLE == 1):
-                self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE, CELL_SIZE))
+                self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.sea_frame]),  (CELL_SIZE, CELL_SIZE))
             elif(WAVE_STYLE == 2):
-                self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.SEA_FRAME]),  (CELL_SIZE*2, CELL_SIZE*2))
+                self.sea_img  = pygame.transform.scale(pygame.image.load(SEA_IMAGE[self.sea_frame]),  (CELL_SIZE*2, CELL_SIZE*2))
 
             self.draw()
         pygame.quit()
@@ -289,10 +292,22 @@ class Game:
 
     def draw(self):
         self.screen.fill((50, 150, 200))
+
         # Draw own board
+        own_border_rect = pygame.Rect(MARGIN - 3, MARGIN - 3, (CELL_SIZE * 10 + 6), (CELL_SIZE * 10 + 6))
+        if(self.placing):
+            pygame.draw.rect(self.screen, FLASH_COLOR[self.flash_frame], own_border_rect)
+            if(self.flash_frame >= len(FLASH_COLOR) - 1):
+                self.flash_frame = 0
+            else:
+                self.flash_frame += 1
+        else:
+            pygame.draw.rect(self.screen, GRID_COLOR, own_border_rect)
+
         for y in range(GRID_SIZE):
             for x in range(GRID_SIZE):
                 rect = pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+
                 grid = [pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, 1),
                 pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, 1, CELL_SIZE),
                 pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + (y + 1) * CELL_SIZE - 1, CELL_SIZE, 1),
@@ -308,7 +323,7 @@ class Game:
                 pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
                 pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
                 pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
-
+                
                 if self.own_board.grid[y][x]:
                     pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
                 if (x, y) in self.own_board.hits:
@@ -318,6 +333,17 @@ class Game:
 
         # Draw enemy board
         offx = MARGIN * 2 + CELL_SIZE * GRID_SIZE
+
+        enemy_border_rect = pygame.Rect(offx - 3, MARGIN - 3, (CELL_SIZE * 10 + 6), (CELL_SIZE * 10 + 6))
+        if(self.turn == True and not self.placing):
+            pygame.draw.rect(self.screen, FLASH_COLOR[self.flash_frame], enemy_border_rect)
+            if(self.flash_frame >= len(FLASH_COLOR) - 1):
+                self.flash_frame = 0
+            else:
+                self.flash_frame += 1
+        else:
+            pygame.draw.rect(self.screen, GRID_COLOR, enemy_border_rect)
+        
         for y in range(GRID_SIZE):
             for x in range(GRID_SIZE):
                 rect = pygame.Rect(offx + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
