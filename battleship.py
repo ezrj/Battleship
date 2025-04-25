@@ -6,7 +6,7 @@ import sys
 import os
 
 # Constants
-WAVE_STYLE = 2     #Choose Between 1 or 2 for comparison
+WAVE_STYLE = 1     #Choose Between 1 or 2 for comparison
 GRID_SIZE = 10
 CELL_SIZE = 40
 MARGIN = 20
