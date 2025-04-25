@@ -56,6 +56,7 @@ os.path.join(ASSETS_DIR, 'Waves1', '0099.png'), os.path.join(ASSETS_DIR, 'Waves1
 
 # Ship rendering color (simple grey square per cell)
 SHIP_TILE_COLOR = (150, 150, 150)
+GRID_COLOR = (0, 0, 0)
 
 # Network message types
 MSG_SHOT = 'shot'
@@ -292,12 +293,21 @@ class Game:
         for y in range(GRID_SIZE):
             for x in range(GRID_SIZE):
                 rect = pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                grid = [pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, 1),
+                pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + y * CELL_SIZE, 1, CELL_SIZE),
+                pygame.Rect(MARGIN + x * CELL_SIZE, MARGIN + (y + 1) * CELL_SIZE - 1, CELL_SIZE, 1),
+                pygame.Rect(MARGIN + (x + 1) * CELL_SIZE - 1, MARGIN + y * CELL_SIZE, 1, CELL_SIZE)]
 
                 if(WAVE_STYLE == 1):
                     self.screen.blit(self.sea_img, rect.topleft)
                 elif(WAVE_STYLE == 2):
                     if(y % 2 == 0 and x % 2 == 0):
                         self.screen.blit(self.sea_img, rect.topleft)
+
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
 
                 if self.own_board.grid[y][x]:
                     pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
@@ -312,11 +322,21 @@ class Game:
             for x in range(GRID_SIZE):
                 rect = pygame.Rect(offx + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
 
+                grid = [pygame.Rect(offx + x * CELL_SIZE, MARGIN + y * CELL_SIZE, CELL_SIZE, 1),
+                pygame.Rect(offx + x * CELL_SIZE, MARGIN + y * CELL_SIZE, 1, CELL_SIZE),
+                pygame.Rect(offx + x * CELL_SIZE, MARGIN + (y + 1) * CELL_SIZE - 1, CELL_SIZE, 1),
+                pygame.Rect(offx + (x + 1) * CELL_SIZE - 1, MARGIN + y * CELL_SIZE, 1, CELL_SIZE)]
+
                 if(WAVE_STYLE == 1):
                     self.screen.blit(self.sea_img, rect.topleft)
                 elif(WAVE_STYLE == 2):
                     if(y % 2 == 0 and x % 2 == 0):
                         self.screen.blit(self.sea_img, rect.topleft)
+
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
+                pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
                 
                 if (x, y) in self.enemy_board.hits:
                     self.screen.blit(self.hit_img, rect.topleft)
