@@ -58,7 +58,7 @@ os.path.join(ASSETS_DIR, 'Waves1', '0099.png'), os.path.join(ASSETS_DIR, 'Waves1
 SHIP_TILE_COLOR = (150, 150, 150)
 
 GRID_COLOR = (0, 0, 0)
-FLASH_COLOR = [(255, 0, 255), (255, 0, 255), (255, 255, 0), (255, 255, 0), (255, 0, 255)]
+FLASH_COLOR = [(238, 75, 43), (238, 75, 43)] #(238, 75, 43) is red
 
 # Network message types
 MSG_SHOT = 'shot'
@@ -109,6 +109,8 @@ class Board:
             hit = target.register_hit((x, y))
             self.hits.add((x, y))
             sunk = target.is_sunk()
+            if sunk == True:
+                print("Your battleship has been sunk.")
             return True, sunk
         else:
             self.misses.add((x, y))
