@@ -299,10 +299,13 @@ class Game:
             gx, gy = (mx - off) // CELL_SIZE, (my - MARGIN) // CELL_SIZE
             if 0 <= gx < GRID_SIZE and 0 <= gy < GRID_SIZE:
                 # attacker relinquishes turn until result
-                self.sunk_opponent_ship = False
-                self.sunk_player_ship = False
-                self.turn = False
-                self.network.send({'type': MSG_SHOT, 'pos': (gx, gy)})
+                if ((gx, gy) in self.enemy_board.hits) or ((gx, gy) in self.enemy_board.misses):
+                    return
+                else:
+                    self.sunk_opponent_ship = False
+                    self.sunk_player_ship = False
+                    self.turn = False
+                    self.network.send({'type': MSG_SHOT, 'pos': (gx, gy)})
 
     def draw(self):
         self.screen.fill((50, 150, 200))
