@@ -381,6 +381,68 @@ class Game:
                     rect = pygame.Rect(MARGIN + px * CELL_SIZE, MARGIN + py * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                     pygame.draw.rect(self.screen, (255, 255, 255), rect, 2)
 
+        ### Info Panel ###
+        # Status:
+        infoFont = pygame.font.SysFont(None, 26)
+        if (self.placing and not self.ready):
+            statusMessage = infoFont.render('Place Your Ships.', True, (255, 255, 255))
+            additionalMessage = infoFont.render('Press \'r\' to rotate.', True, (255, 255, 255))
+            self.screen.blit(additionalMessage, (offx + (CELL_SIZE * 10 + 6), MARGIN + 26))
+        elif (self.placing):
+            statusMessage = infoFont.render('Waiting For Opponent...', True, (255, 255, 255))
+        elif (self.turn == True):
+            statusMessage = infoFont.render('Your Turn', True, (238, 75, 43))
+        else:
+            statusMessage = infoFont.render('Opponent\'s Turn', True, (255, 255, 255))
+        self.screen.blit(statusMessage, (offx + (CELL_SIZE * 10 + 6), MARGIN))
+        #Player Ships
+        if (not self.placing):
+            playerShips = infoFont.render('Your Remaining Ships:', True, (255, 255, 255))
+            self.screen.blit(playerShips, (offx + (CELL_SIZE * 10 + 6), MARGIN + 26))
+            playerShipIndex = 0
+            for ship in self.own_board.ships:
+                if not ship.is_sunk():
+                    for i in range (0, ship.length):
+                        rect = pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26*2) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex), CELL_SIZE/2, CELL_SIZE/2)
+
+                        grid = [pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26*2) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex), CELL_SIZE/2, 1),
+                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26*2) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex), 1, CELL_SIZE/2),
+                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26*2) + (CELL_SIZE/2 * (playerShipIndex + 1)) - 1 + 3 * (playerShipIndex), CELL_SIZE/2, 1),
+                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * (i + 1)) - 1, MARGIN + (26*2) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex), 1, CELL_SIZE/2)]
+
+                        pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
+                    playerShipIndex += 1
+        #Enemy Ships
+        if (False):
+            enemyShips = infoFont.render('Remaining Enemy Ships:', True, (255, 255, 255))
+            self.screen.blit(enemyShips, (offx + (CELL_SIZE * 10 + 6), MARGIN + 200))
+            playerShipIndex = 0
+            for ship in self.enemy_board.ships:
+                if not ship.is_sunk():
+                    for i in range (0, ship.length):
+                        rect = pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, CELL_SIZE/2, CELL_SIZE/2)
+
+                        grid = [pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, CELL_SIZE/2, 1),
+                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, 1, CELL_SIZE/2),
+                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * (playerShipIndex + 1)) - 1 + 3 * (playerShipIndex) + 200, CELL_SIZE/2, 1),
+                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * (i + 1)) - 1, MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, 1, CELL_SIZE/2)]
+
+                        pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
+                        pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
+                    playerShipIndex += 1
+
+                
+
+
+
+
         pygame.display.flip()
 
     def game_over(self, won):
