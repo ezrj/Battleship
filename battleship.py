@@ -477,7 +477,11 @@ class Game:
     def game_over(self, won):
         font = pygame.font.SysFont(None, 48)
         text = 'You won!' if won else 'You lost!'
-        img = font.render(text, True, (255, 255, 255))
+        img = font.render(text, True, (0, 0, 0))
+        back_rect = pygame.Rect(WINDOW_WIDTH // 2 - img.get_width() // 2 - 5, WINDOW_HEIGHT // 2 - img.get_height() // 2 - 5, img.get_width() + 10, img.get_height() + 10)
+        border_back_rect = pygame.Rect(WINDOW_WIDTH // 2 - img.get_width() // 2 - 8, WINDOW_HEIGHT // 2 - img.get_height() // 2 - 8, img.get_width() + 16, img.get_height() + 16)
+        pygame.draw.rect(self.screen, (0, 0, 0), border_back_rect)
+        pygame.draw.rect(self.screen, (255, 255, 255), back_rect)
         self.screen.blit(img, (WINDOW_WIDTH // 2 - img.get_width() // 2, WINDOW_HEIGHT // 2 - img.get_height() // 2))
         pygame.display.flip()
         pygame.time.wait(10000)
