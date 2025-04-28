@@ -177,6 +177,8 @@ class Game:
         self.opponent_ready = False
         self.turn = (role == 'server')
         self.running = True
+        self.sunk_opponent_ship = False
+        self.sunk_player_ship = False
 
         # Load graphics
         self.sea_frame = 0 # water background tile current frame
@@ -225,6 +227,10 @@ class Game:
         elif t == MSG_SHOT:
             x, y = msg['pos']
             hit, sunk = self.own_board.receive_shot(x, y)
+            if sunk:
+                self.sunk_player_ship = True
+            else:
+                self.sunk_player_ship = False
             # Only give defender the turn on a miss
             if not hit:
                 self.turn = True
@@ -236,8 +242,11 @@ class Game:
         elif t == MSG_RESULT:
             hit = msg['hit']
             x, y = msg['pos']
+            sunk = msg['sunk']
             if hit:
                 self.enemy_board.hits.add((x, y))
+                if sunk:
+                    self.sunk_opponent_ship = True
                 # attacker keeps turn on hit
                 self.turn = True
             else:
@@ -290,6 +299,8 @@ class Game:
             gx, gy = (mx - off) // CELL_SIZE, (my - MARGIN) // CELL_SIZE
             if 0 <= gx < GRID_SIZE and 0 <= gy < GRID_SIZE:
                 # attacker relinquishes turn until result
+                self.sunk_opponent_ship = False
+                self.sunk_player_ship = False
                 self.turn = False
                 self.network.send({'type': MSG_SHOT, 'pos': (gx, gy)})
 
@@ -322,13 +333,15 @@ class Game:
                     if(y % 2 == 0 and x % 2 == 0):
                         self.screen.blit(self.sea_img, rect.topleft)
 
+                if self.own_board.grid[y][x]:
+                    pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
+
                 pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
                 pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
                 pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
                 pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
                 
-                if self.own_board.grid[y][x]:
-                    pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
+                
                 if (x, y) in self.own_board.hits:
                     self.screen.blit(self.hit_img, rect.topleft)
                 elif (x, y) in self.own_board.misses:
@@ -387,7 +400,7 @@ class Game:
         infoFont = pygame.font.SysFont(None, 26)
         if (self.placing and not self.ready):
             statusMessage = infoFont.render('Place Your Ships.', True, (255, 255, 255))
-            additionalMessage = infoFont.render('Press \'r\' to rotate.', True, (255, 255, 255))
+            additionalMessage = infoFont.render('Press \'R\' to rotate.', True, (255, 255, 255))
             self.screen.blit(additionalMessage, (offx + (CELL_SIZE * 10 + 6), MARGIN + 26))
         elif (self.placing):
             statusMessage = infoFont.render('Waiting For Opponent...', True, (255, 255, 255))
@@ -429,32 +442,35 @@ class Game:
                         pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
                         pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
                     playerShipIndex += 1
+
         #Enemy Ships
-        if (False):
-            enemyShips = infoFont.render('Remaining Enemy Ships:', True, (255, 255, 255))
-            self.screen.blit(enemyShips, (offx + (CELL_SIZE * 10 + 6), MARGIN + 200))
-            playerShipIndex = 0
-            for ship in self.enemy_board.ships:
-                if not ship.is_sunk():
-                    for i in range (0, ship.length):
-                        rect = pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, CELL_SIZE/2, CELL_SIZE/2)
-
-                        grid = [pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, CELL_SIZE/2, 1),
-                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, 1, CELL_SIZE/2),
-                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * (playerShipIndex + 1)) - 1 + 3 * (playerShipIndex) + 200, CELL_SIZE/2, 1),
-                        pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * (i + 1)) - 1, MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, 1, CELL_SIZE/2)]
-
-                        pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
-                        pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
-                        pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
-                        pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
-                        pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
-                    playerShipIndex += 1
-
+        #if (False):
+        #    enemyShips = infoFont.render('Remaining Enemy Ships:', True, (255, 255, 255))
+        #    self.screen.blit(enemyShips, (offx + (CELL_SIZE * 10 + 6), MARGIN + 200))
+        #    playerShipIndex = 0
+        #    for ship in self.enemy_board.ships:
+        #        if not ship.is_sunk():
+        #            for i in range (0, ship.length):
+        #                rect = pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, CELL_SIZE/2, CELL_SIZE/2)
+#
+        #                grid = [pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, CELL_SIZE/2, 1),
+        #                pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, 1, CELL_SIZE/2),
+        #                pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * i), MARGIN + (26) + (CELL_SIZE/2 * (playerShipIndex + 1)) - 1 + 3 * (playerShipIndex) + 200, CELL_SIZE/2, 1),
+        #                pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * (i + 1)) - 1, MARGIN + (26) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex) + 200, 1, CELL_SIZE/2)]
+#
+        #                pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
+        #                pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
+        #                pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
+        #                pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
+        #                pygame.draw.rect(self.screen, GRID_COLOR, grid[3])
+        #            playerShipIndex += 1
+        if(self.sunk_opponent_ship):
+            enemyShips = infoFont.render('You\'ve Sunk A Ship!', True, (255, 255, 255))
+            self.screen.blit(enemyShips, (offx + (CELL_SIZE * 10 + 6), MARGIN + 385))
+        if(self.sunk_player_ship):
+            enemyShips = infoFont.render('A Ship Has Sunk!', True, (255, 255, 255))
+            self.screen.blit(enemyShips, (offx + (CELL_SIZE * 10 + 6), MARGIN + 385))
                 
-
-
-
 
         pygame.display.flip()
 
