@@ -182,6 +182,7 @@ class Game:
         self.sea_frame = 0 # water background tile current frame
         self.flash_frame = 0 # variable for alternating colors for border flashes
         self.hit_img = pygame.transform.scale(pygame.image.load(HIT_IMAGE), (CELL_SIZE, CELL_SIZE))
+        self.small_hit_img = pygame.transform.scale(pygame.image.load(HIT_IMAGE), (CELL_SIZE/2, CELL_SIZE/2))
         self.miss_img = pygame.transform.scale(pygame.image.load(MISS_IMAGE), (CELL_SIZE, CELL_SIZE))
 
         if(WAVE_STYLE == 1):
@@ -411,6 +412,18 @@ class Game:
                         pygame.Rect(offx + (CELL_SIZE * 10 + 6) + (CELL_SIZE/2 * (i + 1)) - 1, MARGIN + (26*2) + (CELL_SIZE/2 * playerShipIndex) + 3 * (playerShipIndex), 1, CELL_SIZE/2)]
 
                         pygame.draw.rect(self.screen, SHIP_TILE_COLOR, rect)
+
+                        if(ship.orientation == 'H'):
+                            base_pos = ship.positions[0]
+                            check_pos = (base_pos[0] + i, base_pos[1])
+                            if(check_pos in ship.hits):
+                                self.screen.blit(self.small_hit_img, rect.topleft)
+                        else:
+                            base_pos = ship.positions[0]
+                            check_pos = (base_pos[0], base_pos[1] + i)
+                            if(check_pos in ship.hits):
+                                self.screen.blit(self.small_hit_img, rect.topleft)
+                        
                         pygame.draw.rect(self.screen, GRID_COLOR, grid[0])
                         pygame.draw.rect(self.screen, GRID_COLOR, grid[1])
                         pygame.draw.rect(self.screen, GRID_COLOR, grid[2])
